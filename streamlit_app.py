@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import tempfile
 from datetime import datetime
 import uuid
 from werkzeug.utils import secure_filename
@@ -16,12 +17,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# Create necessary directories
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-RESULTS_FOLDER = os.path.join(BASE_DIR, 'results')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(RESULTS_FOLDER, exist_ok=True)
+# Create temporary directory
+TEMP_DIR = tempfile.mkdtemp()
 
 # Constants
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'tif', 'tiff'}
@@ -29,6 +26,21 @@ MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_temp_file(uploaded_file):
+    """حفظ الملف مؤقتاً وإرجاع مساره"""
+    temp_path = os.path.join(TEMP_DIR, f"temp_{uploaded_file.name}")
+    with open(temp_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    return temp_path
+
+def cleanup_temp_files():
+    """حذف جميع الملفات المؤقتة"""
+    for file in os.listdir(TEMP_DIR):
+        try:
+            os.remove(os.path.join(TEMP_DIR, file))
+        except:
+            pass
 
 def display_enhancement_results(enhancement_results1, enhancement_results2):
     st.markdown("### 🔍 نتائج تحسين البصمات")
@@ -153,63 +165,39 @@ if file1 and file2:
     
     # مرحلة التحسين
     if st.button("تحسين البصمات", type="primary"):
-        temp_path1 = os.path.join(UPLOAD_FOLDER, f"temp_{file1.name}")
-        temp_path2 = os.path.join(UPLOAD_FOLDER, f"temp_{file2.name}")
+        temp_path1 = save_temp_file(file1)
+        temp_path2 = save_temp_file(file2)
         
-        with open(temp_path1, "wb") as f:
-            f.write(file1.getbuffer())
-        with open(temp_path2, "wb") as f:
-            f.write(file2.getbuffer())
-        
-        with st.spinner("جاري تحسين البصمات..."):
-            enhancement_results1 = enhance_fingerprint(temp_path1)
-            enhancement_results2 = enhance_fingerprint(temp_path2)
-            display_enhancement_results(enhancement_results1, enhancement_results2)
-        
-        os.remove(temp_path1)
-        os.remove(temp_path2)
+        try:
+            with st.spinner("جاري تحسين البصمات..."):
+                enhancement_results1 = enhance_fingerprint(temp_path1)
+                enhancement_results2 = enhance_fingerprint(temp_path2)
+                display_enhancement_results(enhancement_results1, enhancement_results2)
+        finally:
+            cleanup_temp_files()
     
     # مرحلة التحليل
     if st.button("تحليل تفصيلي للبصمات", type="primary"):
-        temp_path1 = os.path.join(UPLOAD_FOLDER, f"temp_{file1.name}")
-        temp_path2 = os.path.join(UPLOAD_FOLDER, f"temp_{file2.name}")
+        temp_path1 = save_temp_file(file1)
+        temp_path2 = save_temp_file(file2)
         
-        with open(temp_path1, "wb") as f:
-            f.write(file1.getbuffer())
-        with open(temp_path2, "wb") as f:
-            f.write(file2.getbuffer())
-        
-        with st.spinner("جاري تحليل البصمات..."):
-            analysis_results1 = analyze_fingerprint(temp_path1)
-            analysis_results2 = analyze_fingerprint(temp_path2)
-            display_analysis_results(analysis_results1, analysis_results2)
-        
-        os.remove(temp_path1)
-        os.remove(temp_path2)
+        try:
+            with st.spinner("جاري تحليل البصمات..."):
+                analysis_results1 = analyze_fingerprint(temp_path1)
+                analysis_results2 = analyze_fingerprint(temp_path2)
+                display_analysis_results(analysis_results1, analysis_results2)
+        finally:
+            cleanup_temp_files()
     
     # مرحلة المقارنة
     if st.button("مقارنة البصمات", type="primary"):
+        temp_path1 = save_temp_file(file1)
+        temp_path2 = save_temp_file(file2)
+        
         try:
-            # Generate unique filenames
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            unique_id = str(uuid.uuid4())[:8]
-            
-            filename1 = f"{timestamp}_{unique_id}_1_{secure_filename(file1.name)}"
-            filename2 = f"{timestamp}_{unique_id}_2_{secure_filename(file2.name)}"
-            
-            # Save files
-            file1_path = os.path.join(UPLOAD_FOLDER, filename1)
-            file2_path = os.path.join(UPLOAD_FOLDER, filename2)
-            
-            with open(file1_path, "wb") as f:
-                f.write(file1.getbuffer())
-            with open(file2_path, "wb") as f:
-                f.write(file2.getbuffer())
-            
-            # Process fingerprints
             with st.spinner("جاري مقارنة البصمات..."):
                 match_score, kp1_count, kp2_count, good_matches_count, match_filename, minutiae1_filename, minutiae2_filename, sourceafis_score = match_fingerprint(
-                    file1_path, file2_path, RESULTS_FOLDER
+                    temp_path1, temp_path2, TEMP_DIR
                 )
             
             # Display results
@@ -231,17 +219,19 @@ if file1 and file2:
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    st.image(os.path.join(RESULTS_FOLDER, minutiae1_filename), 
+                    st.image(os.path.join(TEMP_DIR, minutiae1_filename), 
                             caption="خصائص البصمة الأولى", use_container_width=True)
                 with col2:
-                    st.image(os.path.join(RESULTS_FOLDER, match_filename), 
+                    st.image(os.path.join(TEMP_DIR, match_filename), 
                             caption="نتائج المطابقة", use_container_width=True)
                 with col3:
-                    st.image(os.path.join(RESULTS_FOLDER, minutiae2_filename), 
+                    st.image(os.path.join(TEMP_DIR, minutiae2_filename), 
                             caption="خصائص البصمة الثانية", use_container_width=True)
             
         except Exception as e:
             st.error(f"حدث خطأ: {str(e)}")
+        finally:
+            cleanup_temp_files()
 else:
     st.warning("الرجاء رفع البصمتين للمقارنة")
 
@@ -251,4 +241,8 @@ st.markdown("### عن النظام")
 st.markdown("""
 هذا النظام يستخدم تقنيات متقدمة في معالجة الصور والتعلم الآلي لتحليل ومطابقة البصمات.
 يمكن للنظام تحسين جودة البصمات من مسرح الجريمة وتحليلها بدقة عالية.
-""") 
+""")
+
+# تنظيف الملفات المؤقتة عند إغلاق التطبيق
+import atexit
+atexit.register(cleanup_temp_files) 

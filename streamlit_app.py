@@ -39,13 +39,13 @@ with col1:
     st.subheader("First Fingerprint")
     file1 = st.file_uploader("Upload first fingerprint", type=list(ALLOWED_EXTENSIONS), key="fp1")
     if file1:
-        st.image(file1, caption="First Fingerprint Preview", use_column_width=True)
+        st.image(file1, caption="First Fingerprint Preview", use_container_width=True)
 
 with col2:
     st.subheader("Second Fingerprint")
     file2 = st.file_uploader("Upload second fingerprint", type=list(ALLOWED_EXTENSIONS), key="fp2")
     if file2:
-        st.image(file2, caption="Second Fingerprint Preview", use_column_width=True)
+        st.image(file2, caption="Second Fingerprint Preview", use_container_width=True)
 
 # Process button
 if st.button("Compare Fingerprints", type="primary"):
@@ -93,13 +93,13 @@ if st.button("Compare Fingerprints", type="primary"):
                 
                 with col1:
                     st.image(os.path.join(RESULTS_FOLDER, minutiae1_filename), 
-                            caption="First Fingerprint Features", use_column_width=True)
+                            caption="First Fingerprint Features", use_container_width=True)
                 with col2:
                     st.image(os.path.join(RESULTS_FOLDER, match_filename), 
-                            caption="Matching Results", use_column_width=True)
+                            caption="Matching Results", use_container_width=True)
                 with col3:
                     st.image(os.path.join(RESULTS_FOLDER, minutiae2_filename), 
-                            caption="Second Fingerprint Features", use_column_width=True)
+                            caption="Second Fingerprint Features", use_container_width=True)
             
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")

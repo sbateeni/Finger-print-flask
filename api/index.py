@@ -11,14 +11,15 @@ from utils.preprocess import preprocess_fingerprint
 from utils.extract_features import extract_features
 from utils.match_fingerprint import match_fingerprint
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 app = Flask(
     __name__,
-    template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), '../templates'),
-    static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static')
+    template_folder=os.path.join(BASE_DIR, '../templates'),
+    static_folder=os.path.join(BASE_DIR, '../static')
 )
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, '../uploads')
 app.config['RESULTS_FOLDER'] = os.path.join(BASE_DIR, '../results')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024

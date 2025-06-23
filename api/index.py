@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import uuid
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 # أضف المسار حتى يتمكن من استيراد utils
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -105,7 +106,4 @@ def upload_file():
 
 # Handler متوافق مع Vercel
 # لا تضع app.run()
-def handler(environ, start_response):
-    from werkzeug.middleware.dispatcher import DispatcherMiddleware
-    application = DispatcherMiddleware(app)
-    return application(environ, start_response) 
+app = DispatcherMiddleware(app) 

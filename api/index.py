@@ -104,6 +104,10 @@ def upload_file():
     flash('Invalid file type')
     return redirect(url_for('index'))
 
+# احذف دالة handler نهائياً
+# فقط اترك متغير app في نهاية الملف
+# لا تضع app.run()
+
 # Handler متوافق مع Vercel
 # لا تضع app.run()
 app = DispatcherMiddleware(app) 

@@ -11,7 +11,11 @@ from utils.preprocess import preprocess_fingerprint
 from utils.extract_features import extract_features
 from utils.match_fingerprint import match_fingerprint
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), '../templates'),
+    static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static')
+)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))

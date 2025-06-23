@@ -4,7 +4,6 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import uuid
-from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 # أضف المسار حتى يتمكن من استيراد utils
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -104,10 +103,4 @@ def upload_file():
     flash('Invalid file type')
     return redirect(url_for('index'))
 
-# احذف دالة handler نهائياً
-# فقط اترك متغير app في نهاية الملف
-# لا تضع app.run()
-
-# Handler متوافق مع Vercel
-# لا تضع app.run()
-app = DispatcherMiddleware(app) 
+# لا تضع app.run() ولا DispatcherMiddleware 
